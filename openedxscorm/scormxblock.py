@@ -221,7 +221,7 @@ class ScormXBlock(XBlock):
             sha1=self.package_meta["sha1"],
             ext=os.path.splitext(self.package_meta["name"])[1],
         )
-        
+
     @property
     def extract_folder_path(self):
         """
@@ -340,35 +340,36 @@ class ScormXBlock(XBlock):
                 "Invalid package: could not find 'imsmanifest.xml' file at the root of the zip file"
             )
         else:
-            tree = ET.parse(imsmanifest_file)
-            imsmanifest_file.seek(0)
-            self.index_page_path = "index.html"
-            namespace = ""
-            for _, node in ET.iterparse(imsmanifest_file, events=["start-ns"]):
-                if node[0] == "":
-                    namespace = node[1]
-                    break
-            root = tree.getroot()
+            with imsmanifest_file as imsmanifest_file:
+                tree = ET.parse(imsmanifest_file)
+                imsmanifest_file.seek(0)
+                self.index_page_path = "index.html"
+                namespace = ""
+                for _, node in ET.iterparse(imsmanifest_file, events=["start-ns"]):
+                    if node[0] == "":
+                        namespace = node[1]
+                        break
+                root = tree.getroot()
 
-            if namespace:
-                resource = root.find(
-                    "{{{0}}}resources/{{{0}}}resource".format(namespace)
-                )
-                schemaversion = root.find(
-                    "{{{0}}}metadata/{{{0}}}schemaversion".format(namespace)
-                )
-            else:
-                resource = root.find("resources/resource")
-                schemaversion = root.find("metadata/schemaversion")
+                if namespace:
+                    resource = root.find(
+                        "{{{0}}}resources/{{{0}}}resource".format(namespace)
+                    )
+                    schemaversion = root.find(
+                        "{{{0}}}metadata/{{{0}}}schemaversion".format(namespace)
+                    )
+                else:
+                    resource = root.find("resources/resource")
+                    schemaversion = root.find("metadata/schemaversion")
 
-            if resource:
-                self.index_page_path = resource.get("href")
-            if (schemaversion is not None) and (
-                re.match("^1.2$", schemaversion.text) is None
-            ):
-                self.scorm_version = "SCORM_2004"
-            else:
-                self.scorm_version = "SCORM_12"
+                if resource:
+                    self.index_page_path = resource.get("href")
+                if (schemaversion is not None) and (
+                        re.match("^1.2$", schemaversion.text) is None
+                ):
+                    self.scorm_version = "SCORM_2004"
+                else:
+                    self.scorm_version = "SCORM_12"
 
     def get_completion_status(self):
         completion_status = self.lesson_status
@@ -388,7 +389,7 @@ class ScormXBlock(XBlock):
         xblock_settings = settings_service.get_settings_bucket(self)
         return xblock_settings.get("LOCATION", default_scorm_location)
 
-    
+
     @staticmethod
     def get_sha1(file_descriptor):
         """
