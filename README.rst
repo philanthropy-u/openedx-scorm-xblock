@@ -35,6 +35,7 @@ By default, SCORM modules will be accessible at "/scorm/" urls and static assets
 
     XBLOCK_SETTINGS["ScormXBlock"] = {
         "LOCATION": "alternatevalue",
+        "SCORM_FILE_STORAGE_TYPE": "openedx.features.philu_utils.backend_storage.ScormXblockS3Storage"
     }
 
 Development
