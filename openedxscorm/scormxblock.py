@@ -7,6 +7,7 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 import zipfile
+import urlparse
 
 from django.conf import settings
 from django.core.files import File
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 # importing directly from settings.XBLOCK_SETTINGS doesn't work here... doesn't have vals from ENV TOKENS yet
 scorm_settings = settings.ENV_TOKENS['XBLOCK_SETTINGS']['ScormXBlock']
 SCORM_FILE_STORAGE_TYPE = scorm_settings.get("SCORM_FILE_STORAGE_TYPE", "django.core.files.storage.default_storage")
+SCORM_MEDIA_BASE_URL = scorm_settings.get("SCORM_MEDIA_BASE_URL", "/scorm")
 
 
 mod, store_class = SCORM_FILE_STORAGE_TYPE.rsplit('.', 1)
@@ -207,7 +209,14 @@ class ScormXBlock(XBlock):
             # is stored in the base folder.
             folder = self.extract_folder_base_path
             logger.warning("Serving SCORM content from old-style path: %s", folder)
-        return scorm_storage_instance.url(os.path.join(folder, self.index_page_path))
+
+        url = scorm_storage_instance.url(os.path.join(folder, self.index_page_path))
+
+        if SCORM_MEDIA_BASE_URL:
+            splitted_url = list(urlparse.urlparse(url))
+            url = "{base_url}{path}".format(base_url=SCORM_MEDIA_BASE_URL, path=splitted_url[2])
+
+        return url
 
     @property
     def package_path(self):
