@@ -3,11 +3,13 @@ import importlib
 import json
 import hashlib
 import os
+import tempfile
 import logging
 import re
 import xml.etree.ElementTree as ET
 import zipfile
 import urlparse
+import concurrent.futures
 
 from django.conf import settings
 from django.core.files import File
@@ -183,12 +185,36 @@ class ScormXBlock(XBlock):
                 'Removing previously unzipped "%s"', self.extract_folder_base_path
             )
             recursive_delete(self.extract_folder_base_path)
+
+        def unzip_member(_scorm_storage_instance,uncompressed_file,extract_folder_path, filename):
+            logger.info('Started uploading file {fname}'.format(fname=filename))
+            _scorm_storage_instance.save(
+                os.path.join(extract_folder_path, filename),
+                uncompressed_file,
+            )
+            logger.info('End uploadubg file {fname}'.format(fname=filename))
+
         with zipfile.ZipFile(package_file, "r") as scorm_zipfile:
-            for zipinfo in scorm_zipfile.infolist():
-                scorm_storage_instance.save(
-                    os.path.join(self.extract_folder_path, zipinfo.filename),
-                    scorm_zipfile.open(zipinfo.filename),
-                )
+            futures = []
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                logger.info('started concurrent.futures.ThreadPoolExecutor')
+                for zipinfo in scorm_zipfile.infolist():
+                    fp = tempfile.TemporaryFile()
+                    fp.write(scorm_zipfile.open(zipinfo.filename).read())
+                    logger.info('started uploadig file {fname}'.format(fname=zipinfo.filename))
+                    if not zipinfo.filename.endswith('/'):
+                        futures.append(
+                            executor.submit(
+                                unzip_member,
+                                scorm_storage_instance,
+                                fp,
+                                self.extract_folder_path,
+                                zipinfo.filename,
+                            )
+                        )
+
+
+                logger.info('end concurrent.futures.ThreadPoolExecutor')
 
         try:
             self.update_package_fields()
