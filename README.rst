@@ -37,6 +37,11 @@ By default, SCORM modules will be accessible at "/scorm/" urls and static assets
         "LOCATION": "alternatevalue",
         "SCORM_FILE_STORAGE_TYPE": "openedx.features.philu_utils.backend_storage.ScormXblockS3Storage"
     }
+    
+ For setup on local machine add following settings in lms.envs.json and cms.envs.json
+ 
+    "XBLOCK_SETTINGS": {},
+    "X_FRAME_OPTIONS": "SAMEORIGIN"
 
 Development
 -----------
