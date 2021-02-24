@@ -39,7 +39,7 @@ By default, SCORM modules will be accessible at "/scorm/" urls and static assets
     }
     
     
-For setup on local machine add following settings in lms.envs.json and cms.envs.json::
+For setup on local machine don't use above configurations rather then add following settings in lms.envs.json and cms.envs.json::
 
     "XBLOCK_SETTINGS": {},
     "X_FRAME_OPTIONS": "SAMEORIGIN"
